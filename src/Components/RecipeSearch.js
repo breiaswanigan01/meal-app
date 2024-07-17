@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
+// src/Components/RecipeSearch.js
+
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import RecipeModal from "./RecipeModal";
 
-const RecipeSearch = () => {
+const RecipeSearch = ({ isAuthenticated, favorites, setFavorites }) => {
   const [query, setQuery] = useState("");
   const [recipes, setRecipes] = useState([]);
   const [error, setError] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState(null); // State to handle selected recipe
-  const [favorites, setFavorites] = useState([]); // State to manage favorite recipes
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false); // State to manage login prompt visibility
 
   // Adding filters state to manage the dietary options checkboxes
   const [filters, setFilters] = useState({
@@ -38,7 +40,7 @@ const RecipeSearch = () => {
     "dessert",
   ];
 
-  const fetchRecipes = async (query) => {
+  const fetchRecipes = useCallback(async (query) => {
     const app_id = "c5534273";
     const app_key = "0d66aba887d5d377d80f2d523e56e5b2";
     try {
@@ -76,7 +78,7 @@ const RecipeSearch = () => {
       setError("Error fetching the recipes. Please try again.");
       console.log("Error fetching the recipes", error);
     }
-  };
+  }, [filters]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -98,6 +100,10 @@ const RecipeSearch = () => {
 
   // Function to toggle favorite status of a recipe
   const toggleFavorite = (recipe) => {
+    if (!isAuthenticated) {
+      setShowLoginPrompt(true); // Show login prompt if user is not authenticated
+      return;
+    }
     setFavorites((prevFavorites) => {
       if (prevFavorites.find((fav) => fav.uri === recipe.uri)) {
         return prevFavorites.filter((fav) => fav.uri !== recipe.uri);
@@ -115,7 +121,7 @@ const RecipeSearch = () => {
   // Use useEffect to fetch random recipes when the component mounts
   useEffect(() => {
     fetchRecipes(); // Fetch with a random query to get random recipes
-  }, []);
+  }, [fetchRecipes]);
 
   return (
     <div className="bg-gray-100">
@@ -126,6 +132,9 @@ const RecipeSearch = () => {
           </Link>
           <Link to="/login" className="text-emerald-600">
             Login
+          </Link>
+          <Link to="/saved-meals" className="text-emerald-600">
+            Saved Meals
           </Link>
         </nav>
         <div className="text-center">
@@ -152,23 +161,21 @@ const RecipeSearch = () => {
           Dietary Options
         </h2>
         {/* Rendering checkboxes below the search bar */}
-        <div className="text-center mx-auto w-full max-w-xl  bg-gray-100 border shadow-lg mb-2 p-1 pb-2 lg:pb-4">
+        <div className="mx-auto w-full max-w-xl bg-gray-100 border shadow-lg mb-2 p-1">
           <div className="mb-3 "></div>
-          <div className="inline-block">
-            <div className="grid  grid-cols-2 md:grid-cols-3 gap-2">
-              {dietaryOptions.map((option) => (
-                <label key={option.id} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={option.id}
-                    checked={filters[option.id]}
-                    onChange={handleFilterChange}
-                    className="mr-2"
-                  />
-                  {option.label}
-                </label>
-              ))}
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {dietaryOptions.map((option) => (
+              <label key={option.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={option.id}
+                  checked={filters[option.id]}
+                  onChange={handleFilterChange}
+                  className="mr-2"
+                />
+                {option.label}
+              </label>
+            ))}
           </div>
         </div>
         {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -177,14 +184,13 @@ const RecipeSearch = () => {
             <div
               key={index}
               className="border p-4 bg-emerald-300 rounded shadow cursor-pointer relative"
-           
+              onClick={() => handleRecipeClick(recipe.recipe)}
             >
               <h2 className="text-xl font-bold mb-2">{recipe.recipe.label}</h2>
               <img
                 src={recipe.recipe.image}
                 alt={recipe.recipe.label}
                 className="w-full h-40 object-cover mb-2"
-                onClick={() => handleRecipeClick(recipe.recipe)}
               />
               <p className="mb-2 text-emer">
                 Calories: {Math.round(recipe.recipe.calories)}
@@ -200,8 +206,8 @@ const RecipeSearch = () => {
               <button
                 className={`absolute top-2 right-2 p-1 rounded-full ${
                   isFavorite(recipe.recipe)
-                    ? "bg-red-500 text-white"
-                    : "bg-white text-red-500"
+                    ? " text-red-500"
+                    : " text-red-500"
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -219,28 +225,19 @@ const RecipeSearch = () => {
             onClose={() => setSelectedRecipe(null)}
           />
         )}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4 text-emerald-700">
-            Favorite Recipes
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {favorites.map((recipe, index) => (
-              <div
-                key={index}
-                className="border p-4 bg-yellow-500 rounded shadow cursor-pointer"
-                onClick={() => handleRecipeClick(recipe)}
+        {showLoginPrompt && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+            <div className="bg-white p-4 rounded shadow-lg max-w-sm w-full">
+              <p className="mb-4">Please log in to save meal</p>
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="bg-emerald-600 text-white p-2 rounded"
               >
-                <h2 className="text-xl font-bold mb-2">{recipe.label}</h2>
-                <img
-                  src={recipe.image}
-                  alt={recipe.label}
-                  className="w-full h-40 object-cover mb-2"
-                />
-                <p className="mb-2">Calories: {Math.round(recipe.calories)}</p>
-              </div>
-            ))}
+                Close
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { auth } from "../firebase";
+import { Link, useNavigate } from "react-router-dom";
+import { auth } from "./firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { FaArrowLeft } from "react-icons/fa";
 
@@ -8,6 +8,8 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -17,6 +19,7 @@ const SignUp = () => {
     } catch (error) {
       setError(error.message);
     }
+    setLoading(false);
   };
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

@@ -1,58 +1,72 @@
 // src/Auth/Login.js
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { auth } from "../firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { FaArrowLeft } from "react-icons/fa"; // Import the icon
 
+import React, { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth"; 
+import { auth } from "./firebase";
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const emailRef = useRef();
+  const passwordRef = useRef();
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Logged in successfully!");
-    } catch (error) {
-      setError(error.message);
+      setError("");
+      setLoading(true);
+      await signInWithEmailAndPassword(
+        auth,
+        emailRef.current.value,
+        passwordRef.current.value
+      );
+      navigate("/");
+    } catch {
+      setError("Failed to log in");
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-96 relative">
-        <Link to="/" className="absolute top-2 left-2 text-emerald-600">
-          <FaArrowLeft size={24} /> {/* Home icon arrow */}
-        </Link>
-        <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        <form onSubmit={handleLogin}>
+    <div className="container mx-auto p-4">
+      <div className="w-full max-w-md mx-auto bg-white shadow-lg rounded-lg">
+        <div className="p-4 border-b">
+          <h2 className="text-2xl">Log In</h2>
+        </div>
+        <form onSubmit={handleSubmit} className="p-4">
+          {error && <p className="text-red-500">{error}</p>}
           <div className="mb-4">
-            <label className="block text-gray-700">Email</label>
+            <label>Email</label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="border rounded w-full py-2 px-3 text-gray-700"
+              ref={emailRef}
               required
+              className="w-full p-2 border rounded"
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700">Password</label>
+            <label>Password</label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border rounded w-full py-2 px-3 text-gray-700"
+              ref={passwordRef}
               required
+              className="w-full p-2 border rounded"
             />
           </div>
-          <button type="submit" className="w-full bg-emerald-600 text-white py-2 rounded">
-            Login
+          <button
+            disabled={loading}
+            type="submit"
+            className="w-full bg-emerald-600 text-white p-2 rounded"
+          >
+            Log In
           </button>
         </form>
+        <div className="p-4 border-t">
+          Need an account? <Link to="/signup">Sign Up</Link>
+        </div>
       </div>
     </div>
   );

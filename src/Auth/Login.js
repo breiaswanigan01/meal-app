@@ -2,8 +2,9 @@
 
 import React, { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth"; 
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebase";
+import { FaArrowLeft } from "react-icons/fa";
 const Login = () => {
   const emailRef = useRef();
   const passwordRef = useRef();
@@ -31,12 +32,15 @@ const Login = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="w-full max-w-md mx-auto bg-white shadow-lg rounded-lg">
-        <div className="p-4 border-b">
-          <h2 className="text-2xl">Log In</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded shadow-md w-96 relative">
+        <div className="">
+          <Link to="/" className="absolute top-2 left-2 text-emerald-600">
+            <FaArrowLeft size={24} /> {/* Home icon arrow */}
+          </Link>
+          <h1 className="text-2xl font-bold mb-4 text-center">Log In</h1>
         </div>
-        <form onSubmit={handleSubmit} className="p-4">
+        <form onSubmit={handleSubmit}>
           {error && <p className="text-red-500">{error}</p>}
           <div className="mb-4">
             <label>Email</label>
@@ -64,9 +68,12 @@ const Login = () => {
             Log In
           </button>
         </form>
-        <div className="p-4 border-t">
-          Need an account? <Link to="/signup">Sign Up</Link>
-        </div>
+        <Link
+          to="/signup"
+          className="block text-center text-emerald-600 hover:text-emerald-400 mt-4"
+        >
+          Don't have an account? Sign Up
+        </Link>
       </div>
     </div>
   );

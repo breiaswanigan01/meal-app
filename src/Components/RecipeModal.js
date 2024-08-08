@@ -4,23 +4,28 @@ const RecipeModal = ({ recipe, onClose }) => {
   if (!recipe) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-4 shadow-lg max-w-md w-full relative">
-        <button className="absolute top-2 right-2 text-emerald-500" onClick={onClose}>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div
+        className={`bg-emerald-300 p-8 rounded shadow-lg transform transition-transform`}
+      >
+        <button
+          className="absolute top-2 right-2 text-gray-600"
+          onClick={onClose}
+        >
           &times;
         </button>
-        <h2 className="text-xl font-bold mb-2">{recipe.label}</h2>
+        <h2 className="text-2xl font-bold mb-4  ">{recipe.label}</h2>
         <img
           src={recipe.image}
           alt={recipe.label}
-          className="w-full h-64 object-cover mb-2"
+          className="w-full h-40 object-contain mb-4"
         />
-        <p className="mb-2">Calories: {Math.round(recipe.calories)}</p>
+        <p className="mb-4">Calories: {Math.round(recipe.calories)}</p>
         <a
           href={recipe.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-emerald-500"
+          className="text-emerald-800"
         >
           View Recipe
         </a>

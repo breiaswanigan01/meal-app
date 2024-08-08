@@ -13,13 +13,15 @@ const SignUp = () => {
 
   const handleSignUp = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      alert("Account created successfully!");
+navigate("/"); //nav to home pg upon signup
     } catch (error) {
       setError(error.message);
-    }
     setLoading(false);
+  }
   };
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

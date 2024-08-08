@@ -1,31 +1,37 @@
 // src/Auth/Login.js
 
 import React, { useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "./firebase";
+import { Link } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 import { FaArrowLeft } from "react-icons/fa";
+
 const Login = () => {
   const emailRef = useRef();
   const passwordRef = useRef();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const email = emailRef.current.value;
+    const password = passwordRef.current.value;
+
+    console.log("Email:", email);
+    console.log("Password:", password);
+
+    if (!email || !password) {
+      setError("Please enter a valid email and password.");
+      return;
+    }
+
     try {
       setError("");
       setLoading(true);
-      await signInWithEmailAndPassword(
-        auth,
-        emailRef.current.value,
-        passwordRef.current.value
-      );
-      navigate("/");
-    } catch {
-      setError("Failed to log in");
+      await login(email, password);
+    } catch (error) {
+      setError(`Failed to log in: ${error.message}`);
     }
 
     setLoading(false);

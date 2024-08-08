@@ -9,8 +9,8 @@ import PrivateRoute from "./Auth/PrivateRoute";
 
 function App() {
   return (
-    <AuthProvider>
       <Router>
+    <AuthProvider>
         <Routes>
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
@@ -24,8 +24,9 @@ function App() {
             }
           />
         </Routes>
+        </AuthProvider>
       </Router>
-    </AuthProvider>
+  
   );
 }
 

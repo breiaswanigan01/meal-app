@@ -9,8 +9,8 @@ const RecipeSearch = () => {
   const [recipes, setRecipes] = useState([]);
   const [error, setError] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  const [favorites, setFavorites] = useState([]);
-  const { currentUser, logout } = useAuth();
+  const [isSpinning, setIsSpinning] = useState(false); 
+  const { currentUser, favorites, setFavorites, logout } = useAuth();
   const navigate = useNavigate();
 
   const [filters, setFilters] = useState({
@@ -38,51 +38,48 @@ const RecipeSearch = () => {
     "dessert",
   ];
 
-  const fetchRecipes = useCallback(
-    async (searchQuery) => {
-      const app_id = "c5534273";
-      const app_key = "0d66aba887d5d377d80f2d523e56e5b2";
-      try {
-        const dietLabels = Object.keys(filters)
-          .filter((key) => filters[key])
-          .join(",");
-        const dietQuery = dietLabels ? `&diet=${dietLabels}` : "";
-        const randomQuery =
-          commonSearchTerms[
-            Math.floor(Math.random() * commonSearchTerms.length)
-          ];
-        const query = searchQuery || `q=${randomQuery}`;
+  const fetchRecipes = useCallback(async (query, filters) => {
+    const app_id = "c5534273";
+    const app_key = "0d66aba887d5d377d80f2d523e56e5b2";
+    try {
+      const dietLabels = Object.keys(filters)
+        .filter((key) => filters[key])
+        .join(",");
+      const dietQuery = dietLabels ? `&diet=${dietLabels}` : "";
+      const randomQuery =
+        commonSearchTerms[Math.floor(Math.random() * commonSearchTerms.length)];
+      const searchQuery = query
+        ? `q=${encodeURIComponent(query)}`
+        : `q=${randomQuery}`;
 
-        console.log(`Fetching recipes with query: ${query}`);
+      console.log(`Fetching recipes with query: ${searchQuery}`);
 
-        const response = await axios.get(
-          `https://api.edamam.com/search?${query}&app_id=${app_id}&app_key=${app_key}${dietQuery}`
-        );
+      const response = await axios.get(
+        `https://api.edamam.com/search?${searchQuery}&app_id=${app_id}&app_key=${app_key}${dietQuery}`
+      );
 
-        console.log("API response:", response.data);
+      console.log("API response:", response.data);
 
-        if (response.data.hits.length === 0) {
-          setError("No recipes found for the selected dietary options.");
-          setRecipes([]);
-        } else {
-          setError("");
-          setRecipes(response.data.hits);
-        }
-      } catch (error) {
-        setError("Error fetching the recipes. Please try again.");
-        console.log("Error fetching the recipes", error);
+      if (response.data.hits.length === 0) {
+        setError("No recipes found for the selected dietary options.");
+        setRecipes([]);
+      } else {
+        setError("");
+        setRecipes(response.data.hits);
       }
-    },
-    [filters]
-  );
-
+    } catch (error) {
+      setError("Error fetching the recipes. Please try again.");
+      console.log("Error fetching the recipes", error);
+    }
+  }, []);
+// automatically display recipes when page loaded
   useEffect(() => {
-    fetchRecipes(); // Fetch with a random query to get random recipes
-  }, [fetchRecipes]);
+    fetchRecipes(query, filters);
+  }, [fetchRecipes, query, filters]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchRecipes(`q=${encodeURIComponent(query)}`);
+    fetchRecipes(query, filters);
   };
 
   const handleFilterChange = (e) => {
@@ -93,6 +90,7 @@ const RecipeSearch = () => {
   };
 
   const handleRecipeClick = (recipe) => {
+    setIsSpinning(true);
     setSelectedRecipe(recipe);
   };
 
@@ -102,12 +100,15 @@ const RecipeSearch = () => {
       return;
     }
     setFavorites((prevFavorites) => {
-      const isFav = prevFavorites.find((fav) => fav.uri === recipe.uri);
-      const updatedFavorites = isFav
-        ? prevFavorites.filter((fav) => fav.uri !== recipe.uri)
-        : [...prevFavorites, recipe];
-      localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-      return updatedFavorites;
+      if (prevFavorites.find((fav) => fav.uri === recipe.uri)) {
+        const updatedFavorites = prevFavorites.filter((fav) => fav.uri !== recipe.uri);
+        localStorage.setItem(currentUser.uid + "-favorites", JSON.stringify(updatedFavorites));
+        return updatedFavorites;
+      } else {
+        const updatedFavorites = [...prevFavorites, recipe];
+        localStorage.setItem(currentUser.uid + "-favorites", JSON.stringify(updatedFavorites));
+        return updatedFavorites;
+      }
     });
   };
 
@@ -116,14 +117,16 @@ const RecipeSearch = () => {
   };
 
   useEffect(() => {
-    const storedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
-    setFavorites(storedFavorites);
-  }, []);
+    if (currentUser) {
+      const savedFavorites = JSON.parse(localStorage.getItem(currentUser.uid + "-favorites")) || [];
+      setFavorites(savedFavorites);
+    }
+  }, [currentUser, setFavorites]);
 
   return (
     <div className="bg-gray-100">
       <div className="container mx-auto p-4">
-        <nav className=" flex justify-between ">
+        <nav className="flex justify-between">
           <div>
             {currentUser && (
               <button
@@ -137,7 +140,7 @@ const RecipeSearch = () => {
               </button>
             )}
           </div>
-          <div className="flex space-x-4 ">
+          <div className="flex space-x-4">
             {!currentUser && (
               <>
                 <Link to="/signup" className="text-emerald-600">
@@ -173,7 +176,7 @@ const RecipeSearch = () => {
             Search
           </button>
         </form>
-        <h2 className=" text-center text-2xl md:text-3xl font-bold mb-2 text-emerald-700">
+        <h2 className="text-center text-2xl md:text-3xl font-bold mb-2 text-emerald-700">
           Dietary Options
         </h2>
         <div className="text-center bg-gray-100 border shadow-lg mb-2 p-1">
@@ -200,16 +203,16 @@ const RecipeSearch = () => {
           {recipes.map((recipe, index) => (
             <div
               key={index}
-              className="border p-4 bg-emerald-300 rounded shadow cursor-pointer relative"
+              className="border p-4 bg-gray-600 rounded shadow cursor-pointer relative"
               onClick={() => handleRecipeClick(recipe.recipe)}
             >
-              <h2 className="text-xl font-bold mb-2">{recipe.recipe.label}</h2>
+              <h2 className=" capitalize text-xl text-white font-bold mb-2">{recipe.recipe.label}</h2>
               <img
                 src={recipe.recipe.image}
                 alt={recipe.recipe.label}
-                className="w-full h-40 object-cover mb-2"
+                className="w- h-40 object-contain mb-2 m-auto hover:shadow-md"
               />
-              <p className="mb-2 text-emer">
+              <p className="mb-2 ">
                 Calories: {Math.round(recipe.recipe.calories)}
               </p>
               <a
@@ -221,8 +224,10 @@ const RecipeSearch = () => {
                 View Recipe
               </a>
               <button
-                className={`absolute top-2 right-2 p-1 rounded-full ${
-                  isFavorite(recipe.recipe) ? "text-pink-800" : " text-white"
+                className={`absolute top-2 right-2 p-1 rounded-full text-lg ${
+                  isFavorite(recipe.recipe)
+                    ? " text-red-500"
+                    : " text-red-500"
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -237,7 +242,11 @@ const RecipeSearch = () => {
         {selectedRecipe && (
           <RecipeModal
             recipe={selectedRecipe}
-            onClose={() => setSelectedRecipe(null)}
+            onClose={() => {
+              setIsSpinning(false);
+              setSelectedRecipe(null);
+            }}
+            isSpinning={isSpinning}
           />
         )}
       </div>
@@ -246,3 +255,4 @@ const RecipeSearch = () => {
 };
 
 export default RecipeSearch;
+

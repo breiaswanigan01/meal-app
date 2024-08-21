@@ -9,7 +9,7 @@ const RecipeSearch = () => {
   const [recipes, setRecipes] = useState([]);
   const [error, setError] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  const [isSpinning, setIsSpinning] = useState(false); 
+  const [isSpinning, setIsSpinning] = useState(false);
   const { currentUser, favorites, setFavorites, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -72,10 +72,10 @@ const RecipeSearch = () => {
       console.log("Error fetching the recipes", error);
     }
   }, []);
-// automatically display recipes when page loaded
+  // automatically display recipes when page loaded
   useEffect(() => {
     fetchRecipes(query, filters);
-  }, [fetchRecipes, query, filters]);
+  }, [fetchRecipes]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -101,12 +101,20 @@ const RecipeSearch = () => {
     }
     setFavorites((prevFavorites) => {
       if (prevFavorites.find((fav) => fav.uri === recipe.uri)) {
-        const updatedFavorites = prevFavorites.filter((fav) => fav.uri !== recipe.uri);
-        localStorage.setItem(currentUser.uid + "-favorites", JSON.stringify(updatedFavorites));
+        const updatedFavorites = prevFavorites.filter(
+          (fav) => fav.uri !== recipe.uri
+        );
+        localStorage.setItem(
+          currentUser.uid + "-favorites",
+          JSON.stringify(updatedFavorites)
+        );
         return updatedFavorites;
       } else {
         const updatedFavorites = [...prevFavorites, recipe];
-        localStorage.setItem(currentUser.uid + "-favorites", JSON.stringify(updatedFavorites));
+        localStorage.setItem(
+          currentUser.uid + "-favorites",
+          JSON.stringify(updatedFavorites)
+        );
         return updatedFavorites;
       }
     });
@@ -118,7 +126,8 @@ const RecipeSearch = () => {
 
   useEffect(() => {
     if (currentUser) {
-      const savedFavorites = JSON.parse(localStorage.getItem(currentUser.uid + "-favorites")) || [];
+      const savedFavorites =
+        JSON.parse(localStorage.getItem(currentUser.uid + "-favorites")) || [];
       setFavorites(savedFavorites);
     }
   }, [currentUser, setFavorites]);
@@ -126,7 +135,7 @@ const RecipeSearch = () => {
   return (
     <div className="bg-gray-100">
       <div className="container mx-auto p-4">
-        <nav className="flex justify-between">
+        <nav className="flex justify-between text-indigo-800 md:text-lg">
           <div>
             {currentUser && (
               <button
@@ -134,7 +143,6 @@ const RecipeSearch = () => {
                   await logout();
                   navigate("/login");
                 }}
-                className="text-emerald-600"
               >
                 Logout
               </button>
@@ -143,21 +151,21 @@ const RecipeSearch = () => {
           <div className="flex space-x-4">
             {!currentUser && (
               <>
-                <Link to="/signup" className="text-emerald-600">
+                <Link to="/signup" >
                   Sign Up
                 </Link>
-                <Link to="/login" className="text-emerald-600">
+                <Link to="/login">
                   Login
                 </Link>
               </>
             )}
-            <Link to="/saved-meals" className="text-emerald-600">
+            <Link to="/saved-meals">
               Saved Meals
             </Link>
           </div>
         </nav>
         <div className="text-center">
-          <h1 className="text-2xl font-semibold md:text-4xl lg:text-5xl text-emerald-700 mb-8">
+          <h1 className="text-2xl font-semibold md:text-4xl lg:text-5xl text-indigo-800 mb-8">
             Welcome! What do you have a taste for today?
           </h1>
         </div>
@@ -171,12 +179,12 @@ const RecipeSearch = () => {
           />
           <button
             type="submit"
-            className="bg-emerald-600 text-white p-2 rounded"
+            className="bg-indigo-800 hover:bg-indigo-600 text-white p-2 rounded"
           >
             Search
           </button>
         </form>
-        <h2 className="text-center text-2xl md:text-3xl font-bold mb-2 text-emerald-700">
+        <h2 className="text-center text-2xl md:text-3xl font-bold mb-2 text-indigo-800">
           Dietary Options
         </h2>
         <div className="text-center bg-gray-100 border shadow-lg mb-2 p-1">
@@ -203,14 +211,16 @@ const RecipeSearch = () => {
           {recipes.map((recipe, index) => (
             <div
               key={index}
-              className="border p-4 bg-gray-600 rounded shadow cursor-pointer relative"
+              className="border p-4 bg-white rounded shadow cursor-pointer relative"
               onClick={() => handleRecipeClick(recipe.recipe)}
             >
-              <h2 className=" capitalize text-xl text-white font-bold mb-2">{recipe.recipe.label}</h2>
+              <h2 className=" capitalize text-xl text-indigo-800 font-bold mt-2 mb-2">
+                {recipe.recipe.label}
+              </h2>
               <img
                 src={recipe.recipe.image}
                 alt={recipe.recipe.label}
-                className="w- h-40 object-contain mb-2 m-auto hover:shadow-md"
+                className=" h-40 object-contain mb-2 m-auto hover:shadow-md"
               />
               <p className="mb-2 ">
                 Calories: {Math.round(recipe.recipe.calories)}
@@ -219,15 +229,13 @@ const RecipeSearch = () => {
                 href={recipe.recipe.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500"
+                className="text-sky-800"
               >
                 View Recipe
               </a>
               <button
-                className={`absolute top-2 right-2 p-1 rounded-full text-lg ${
-                  isFavorite(recipe.recipe)
-                    ? " text-red-500"
-                    : " text-red-500"
+                className={`absolute top-0.5 right-2 p-1  rounded-full text-lg ${
+                  isFavorite(recipe.recipe) ? " text-indigo-500" : " text-indigo-500"
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -243,10 +251,9 @@ const RecipeSearch = () => {
           <RecipeModal
             recipe={selectedRecipe}
             onClose={() => {
-              setIsSpinning(false);
+             
               setSelectedRecipe(null);
             }}
-            isSpinning={isSpinning}
           />
         )}
       </div>
@@ -255,4 +262,3 @@ const RecipeSearch = () => {
 };
 
 export default RecipeSearch;
-
